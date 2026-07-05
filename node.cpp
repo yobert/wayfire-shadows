@@ -55,13 +55,13 @@ void shadow_node_t::gen_render_instances(std::vector<wf::scene::render_instance_
         {
             // coordinates relative to view origin (not bounding box origin)
             wf::point_t frame_origin = self->frame_offset;
-            wf::region_t paint_region = self->shadow_region + frame_origin;
+            wf::regionf_t paint_region{self->shadow_region + frame_origin};
             paint_region &= data.damage;
 
             for (const auto& box : paint_region)
 
             {
-                self->shadow.render(data, frame_origin, wlr_box_from_pixman_box(box) , self->view->activated);
+                self->shadow.render(data, frame_origin, box, self->view->activated);
             }
             self->_was_activated = self->view->activated;
         }
@@ -75,17 +75,16 @@ void shadow_node_t::update_geometry() {
     shadow.resize(frame_geometry.width, frame_geometry.height);
 
     // TODO: Check whether this can be done in a nicer/easier way
-    wf::pointf_t view_origin_f = view->get_surface_root_node()->to_global({0, 0}); 
-    wf::point_t view_origin {(int)view_origin_f.x, (int)view_origin_f.y};
+    wf::point_t view_origin = view->get_surface_root_node()->to_global({0, 0}).round_down();
 
     // Offset between view origin and frame top left corner
-    frame_offset = wf::origin(frame_geometry) - view_origin;
+    frame_offset = wf::origin(frame_geometry).round_down() - view_origin;
 
     // Shadow geometry is relative to the top left corner of the frame (not the view)
     wf::geometry_t shadow_geometry = shadow.get_geometry();
 
     // move to view-relative coordinates
-    geometry = shadow_geometry + frame_offset;
+    geometry = shadow_geometry + wf::pointf_t{frame_offset};
 
     this->shadow_region = shadow.calculate_region();
 
