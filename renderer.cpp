@@ -64,7 +64,7 @@ shadow_renderer_t::~shadow_renderer_t() {
     });
 }
 
-void shadow_renderer_t::render(const wf::scene::render_instruction_t& data, wf::point_t window_origin, const pixman_box64f_t& scissor, const bool glow) {
+void shadow_renderer_t::render(const wf::scene::render_instruction_t& data, wf::pointf_t window_origin, const pixman_box64f_t& scissor, const bool glow) {
     float radius = shadow_radius_option;
 
     wf::color_t color = shadow_color_option;
@@ -98,7 +98,7 @@ void shadow_renderer_t::render(const wf::scene::render_instruction_t& data, wf::
     program.use(wf::TEXTURE_TYPE_RGBA);
 
     // Compute vertex rectangle geometry
-    wf::geometry_t bounds = outer_geometry + wf::pointf_t{window_origin};
+    wf::geometry_t bounds = outer_geometry + window_origin;
     float left = bounds.x;
     float right = bounds.x + bounds.width;
     float top = bounds.y;
@@ -121,8 +121,8 @@ void shadow_renderer_t::render(const wf::scene::render_instruction_t& data, wf::
     program.uniform1f("radius", radius);
     program.uniform4f("color", premultiplied);
 
-    const auto inner = window_geometry + wf::pointf_t{window_origin};
-    const auto shadow_inner = shadow_projection_geometry + wf::pointf_t{window_origin};
+    const auto inner = window_geometry + window_origin;
+    const auto shadow_inner = shadow_projection_geometry + window_origin;
     program.uniform2f("lower", shadow_inner.x, shadow_inner.y);
     program.uniform2f("upper", shadow_inner.x + shadow_inner.width, shadow_inner.y + shadow_inner.height);
 
@@ -149,9 +149,9 @@ void shadow_renderer_t::render(const wf::scene::render_instruction_t& data, wf::
     });
 }
 
-wf::region_t shadow_renderer_t::calculate_region() const {
+wf::regionf_t shadow_renderer_t::calculate_region() const {
     // TODO: geometry and region depending on whether glow is active or not
-    wf::region_t region = wf::region_t(shadow_geometry) | wf::region_t(glow_geometry);
+    wf::regionf_t region = wf::regionf_t(shadow_geometry) | wf::regionf_t(glow_geometry);
 
     if (clip_shadow_inside) {
         region ^= window_geometry;
